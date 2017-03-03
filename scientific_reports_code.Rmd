@@ -6,6 +6,9 @@ date: "January 11, 2017"
 output: pdf_document
 ---
 
+I am adding this because I am learning how to use github today!
+
+
 Code below sets working directory (make sure to set your OWN working directory) and opens text files, appends packages used 
 ```{r}
 setwd("")
