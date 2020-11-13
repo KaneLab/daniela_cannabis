@@ -1,0 +1,707 @@
+
+setwd("~")
+alldata = read.table("data_farm_project_summer_2015_07082020.txt", header=T)
+
+###########################################################################
+###################leaf morphometric analysis + PC scores #################
+###########################################################################
+
+library(geomorph)
+
+ldmk=readland.tps("landmarks_20012020.txt", specID="ID")
+
+dim(ldmk)
+
+procdata <- gpagen(ldmk, Proj=T, ProcD = T)
+gpagen(ldmk)
+
+gpa.lands <- gpagen(ldmk)
+
+summary(gpa.lands)
+
+#for(i in 1:dim(procdata$coords)[3]) points(procdata$coords[,,i])
+#plotAllSpecimens(procdata$coords)
+procdata$coords 
+#procdata$Csize 
+
+pca.lands <- plotTangentSpace(procdata$coords, label=TRUE,xlab="PC1 (70.5% explained variation)", ylab="PC2 (11.8% explained variation)")
+pca.lands$pc.summary #proportion of variance PC1= 0.7045, PC2= 0.1177  = 0.8222 82% of variance
+
+prinscores=pca.lands$pc.scores
+#write.table(prinscores, file="prinscores_27082019.txt", sep="\t")
+
+
+consensus <- apply(procdata$coords, c(1,2), mean)
+
+#plotRefToTarget(consensus,procdata$coords[,,1])
+
+#plot(consensus,asp=1, type="n")
+#for(i in 1:length(procdata$coords[,,3]))
+#  points(procdata$coords[,,i], pch=20)
+#points(consensus, col="Red", cex=2, pch=20)
+
+prinscores=pca.lands$pc.scores
+
+
+
+
+###########################################################################
+##################PC plots males vs females Fig 2 #########################
+###########################################################################
+
+library(NbClust)
+
+alldata = read.table("data_farm_project_summer_2015_07082020.txt", header=T)
+head(alldata)
+
+leafpc <- alldata[,c(41:56)]
+leafpc
+
+par(mfrow=c(1,1))
+
+cannsex <- alldata$sex
+cannsex
+
+shapes = c(1, 15) 
+shapes <- shapes[as.numeric(alldata$sex)]
+
+#colores = c("#cc0472","#4287f5") 
+#colores <- colores[as.numeric(alldata$sex)]
+
+
+#plot(leafpc[c("LPC1", "LPC2")], pch = shapes, col=colores, ylim=c(-0.4,0.4), 
+#     xlab="PC1 (70.45% explained variation)", ylab="PC2 (11.77% explained variation)")
+#legend("bottomleft", inset = .05, title = "Sex", pch=shapes, legend= cannsex)
+
+
+
+plot(leafpc[c("LPC1", "LPC2")], pch = shapes, ylim=c(-0.4,0.4), 
+     xlab="PC1 (70.45% explained variation)", ylab="PC2 (11.77% explained variation)")
+#legend("bottomleft", inset = .05, title = "Sex", pch=shapes, legend= cannsex)
+
+
+
+
+###########################################################################
+##################correlations Leaf PC vs cannabinoids ####################
+###########################################################################
+
+
+
+#plot(alldata$LPC1, alldata$CBG_over_all_cannabinoids, pch=19,
+#  xlab="PC1 (70.45% explained variation)", ylab="Percent CBG") 
+cor.test(alldata$LPC1, alldata$CBG_over_all_cannabinoids)
+#t = 0.52533, df = 97, p-value = 0.6006, cor = 0.05326311
+
+
+#plot(alldata$PC1, alldata$percent_d9thc, pch=19,
+     #xlab="PC1 (70.45% explained variation)", ylab="Percent THC")  
+cor.test(alldata$LPC1, alldata$THC_over_all_cannabinoids)
+#t = -0.52648, df = 97, p-value = 0.5998, cor = -0.05337926
+
+
+#plot(alldata$LPC1, alldata$CBD_over_all_cannabinoids, pch=19,
+ #    xlab="PC1 (70.45% explained variation)", ylab="Percent CBD") 
+cor.test(alldata$LPC1, alldata$CBD_over_all_cannabinoids)
+#t = 0.5138, df = 97, p-value = 0.6086, cor = 0.05209759
+
+
+
+
+###########################################################################
+##################cannabinoid pc analysis and Fig 3 #######################
+###########################################################################
+
+library(car)
+library(NbClust)
+
+threecann = read.table("threecannabinoids_27082019.txt", sep="\t", header=T)
+head(threecann)
+tail(threecann)
+
+pcacann = prcomp(threecann, scale. = TRUE)
+pcacann
+summary(pcacann) #Proportion of Variance PC1=0.5502 PC2=0.3900 = 94%
+
+pcaMatrix <- paste(pcacann$x[,1],pcacann$x[,2],pcacann$x[,3])
+pcaMatrix
+head(pcaMatrix)
+#write.table(pcaMatrix, file = "PC_matrix_cannabinoids_27082019.txt", sep="\t", row.names = F)
+pcacann$rotation
+
+
+cannapc <- alldata[c(1:100),c(34:36)]
+cannapc
+
+plot(cannapc$CPC1, cannapc$CPC2, pch = shapes,
+    xlab="PC1 (55% explained variation)", ylab="PC2 (39% explained variation)")
+
+
+km3 = kmeans(cannapc, 2, nstart=100)
+km3
+#plot(cannapc, col =(km3$cluster +1) , pch=19, cex=2)
+
+plot(cannapc[c("CPC1", "CPC2")],  pch=(km3$cluster+16), 
+     xlab="PC1 (55% explained variation)", ylab="PC2 (39% explained variation)")
+#points(km3$centers[,c("CPC1", "CPC2")], col=1, pch=19, cex=2)
+
+
+
+###########################################################################
+##################cannabinoid vs. leaf ps graph Fig 4 #####################
+###########################################################################
+
+
+plot(alldata$LPC1, alldata$CPC1,pch = shapes, na.rm=T,
+     xlab="Leaf Shape PC1 (70.45% explained variation)", ylab="Cannabinoid PC1 (55% explained variation)")
+cor.test(alldata$LPC1, alldata$CPC1, na.rm=T)
+
+var(alldata$LPC1, na.rm=T)
+var(alldata$CPC1, na.rm=T)
+cov(alldata$LPC1,alldata$CPC1, use="complete.obs")
+
+
+
+###########################################################################
+################# leaf shape (PC1) vs 3 leaf traits Fig S1 ################
+###########################################################################
+
+alldata = alldata[-c(29,282),]
+dim(gpa.lands$coords)
+
+###############################Leaf length (Fig S1A) #######################
+
+cor.test(alldata$LPC1, alldata$leaf_Length_cm)
+#plot(alldata$LPC1, alldata$leaf_Length_cm)
+plot(alldata$leaf_Length_cm, alldata$LPC1, pch=19,
+     xlab="Leaf length (cm)", ylab="PC1 (70.5% explained variation)")
+var(alldata$leaf_Length_cm, na.rm=T)
+var(alldata$LPC1, na.rm=T)
+cov(alldata$LPC1,alldata$leaf_Length_cm, use="complete.obs")
+
+
+
+length(alldata$leaf_Length_cm)
+
+PredLeafLen<-shape.predictor(gpa.lands$coords,x=alldata$leaf_Length_cm,
+                             Intercept = T,predmin=min(alldata$leaf_Length_cm),
+                             predmax=max(alldata$leaf_Length_cm))
+
+LeafLen<-alldata$leaf_Length_cm
+
+PredLeafLen<-shape.predictor(gpa.lands$coords,x=LeafLen,
+                             Intercept = T,predmin=min(LeafLen),
+                             predmax=max(LeafLen))
+
+# graph merging  scatterplot with shapes at the extremes
+# Divide plotting window in grid to order and  locate plotted items
+PlotGrid<-matrix(c(2,3,1,1,1,1),ncol = 2,nrow = 3,byrow = T)
+layout(PlotGrid,widths = c(1,1),heights = c(0.8,1,1))
+par(mar=c(4,4,1,1)) 
+
+xlab<-paste("Leaf length (cm)")
+ylab<-paste("PC1 ", "(", round(pca.lands$pc.summary$importance[2,1]*100,1), 
+            "% explained variation)", sep = "")
+
+plot(LeafLen,alldata$LPC1, pch=shapes,xlab = xlab,ylab = ylab)
+
+plotRefToTarget(consensus,PredLeafLen$predmin,mag = 3)#TPS grid w/ min leaf length (magnification 3X)
+plotRefToTarget(consensus,PredLeafLen$predmax,mag = 3)#TPS grid w/ max sleaf length (magnification 3X)
+
+
+
+###############################Serration mid leaflet (Fig S1B) #######################
+
+cor.test(alldata$LPC1, alldata$no_serration_mid_leaflet)
+#plot(alldata$LPC1, alldata$no_serration_mid_leaflet)
+par(mfrow = c(1,1))
+plot(alldata$no_serration_mid_leaflet, alldata$LPC1, pch=19,
+     xlab="Number of serration of the middle leaflet", ylab="PC1 (70.5% explained variation)")
+var(alldata$no_serration_mid_leaflet, na.rm=T)
+var(alldata$LPC1, na.rm=T)
+cov(alldata$LPC1,alldata$no_serration_mid_leaflet, use="complete.obs")
+
+length(alldata$no_serration_mid_leaflet)
+
+PredSerrNum<-shape.predictor(gpa.lands$coords,x=alldata$no_serration_mid_leaflet,
+                             Intercept = T,
+                             predmin=min(alldata$no_serration_mid_leaflet),
+                             predmax=max(alldata$no_serration_mid_leaflet))
+
+SerrNum<-alldata$no_serration_mid_leaflet
+
+PredSerrNum<-shape.predictor(gpa.lands$coords,x=SerrNum,
+                             Intercept = T,predmin=min(SerrNum),
+                             predmax=max(SerrNum))
+
+# graph merging  scatterplot with shapes at the extremes
+# Divide plotting window in grid to order and  locate plotted items
+PlotGrid<-matrix(c(2,3,1,1,1,1),ncol = 2,nrow = 3,byrow = T)
+layout(PlotGrid,widths = c(1,1),heights = c(0.8,1,1))
+par(mar=c(4,4,1,1)) 
+
+xlab<-paste("Number of serration of the middle leaflet")
+ylab<-paste("PC1 ", "(", round(pca.lands$pc.summary$importance[2,1]*100,1), 
+            "% explained variation)", sep = "")
+plot(SerrNum,alldata$LPC1, pch=shapes,xlab = xlab,ylab = ylab)
+
+plotRefToTarget(consensus,PredSerrNum$predmin,mag = 3)#TPS grid w/ min serration number (magnification 3X)
+plotRefToTarget(consensus,PredSerrNum$predmax,mag = 3) #TPS grid w/ max serration number (magnification 3X)
+
+
+
+
+###############################Number of leaflets (Fig S1C) #######################
+
+
+cor.test(alldata$LPC1, alldata$no_of_Leaflets)
+#plot(alldata$LPC1, alldata$no_of_Leaflets)
+par(mfrow = c(1,1))
+plot(alldata$no_of_Leaflets, alldata$LPC1, pch=19, 
+     xlab="Number of leaflets", ylab="PC1 (70.5% explained variation)")
+var(alldata$no_of_Leaflets, na.rm=T)
+var(alldata$LPC1, na.rm=T)
+cov(alldata$LPC1,alldata$no_of_Leaflets, use="complete.obs")
+
+
+length(alldata$no_of_Leaflets)
+
+PredNumLeaf<-shape.predictor(gpa.lands$coords,x=alldata$no_of_Leaflets,
+                             Intercept = T,
+                             predmin=min(alldata$no_of_Leaflets),
+                             predmax=max(alldata$no_of_Leaflets))
+
+NumLeaf<-alldata$no_of_Leaflets
+
+PredNumLeaf<-shape.predictor(gpa.lands$coords,x=NumLeaf,
+                             Intercept = T,predmin=min(NumLeaf),
+                             predmax=max(NumLeaf))
+
+# graph merging  scatterplot with shapes at the extremes
+# Divide plotting window in grid to order and  locate plotted items
+PlotGrid<-matrix(c(2,3,1,1,1,1),ncol = 2,nrow = 3,byrow = T)
+layout(PlotGrid,widths = c(1,1),heights = c(0.8,1,1))
+par(mar=c(4,4,1,1)) 
+
+
+xlab<-paste("Number of leaflets")
+ylab<-paste("PC1 ", "(", round(pca.lands$pc.summary$importance[2,1]*100,1), 
+            "% explained variation)", sep = "")
+
+plot(NumLeaf,alldata$LPC1, pch=shapes,xlab = xlab,ylab = ylab)
+
+
+plotRefToTarget(consensus,PredNumLeaf$predmin,mag = 3)# TPS grid  minimum leaflet number (magnification 3X)
+plotRefToTarget(consensus,PredNumLeaf$predmax,mag = 3)# TPS grid of maximum leaflet number (magnification 3X)
+
+
+###########################################################################
+################# cannabinoids vs cannabinoids Fig S2 #####################
+###########################################################################
+
+
+par(mfrow = c(1,1))
+plot(alldata$CBG_over_all_cannabinoids, alldata$CBD_over_all_cannabinoids, pch = shapes,
+     xlab="Percent CBG", ylab="Percent CBD")
+cor.test(alldata$CBD_over_all_cannabinoids, alldata$CBG_over_all_cannabinoids)
+var(alldata$CBG_over_all_cannabinoids, na.rm=T)
+var(alldata$CBD_over_all_cannabinoids, na.rm=T)
+cov(alldata$CBD_over_all_cannabinoids, alldata$CBG_over_all_cannabinoids, use="complete.obs")
+
+
+
+plot(alldata$THC_over_all_cannabinoids, alldata$CBG_over_all_cannabinoids, pch = shapes,
+     xlab="Percent THC", ylab="Percent CBG")
+cor.test(alldata$THC_over_all_cannabinoids, alldata$CBG_over_all_cannabinoids)
+var(alldata$CBG_over_all_cannabinoids, na.rm=T)
+var(alldata$THC_over_all_cannabinoids, na.rm=T)
+cov(alldata$THC_over_all_cannabinoids, alldata$CBG_over_all_cannabinoids, use="complete.obs")
+
+
+
+plot(alldata$THC_over_all_cannabinoids, alldata$CBD_over_all_cannabinoids, pch = shapes,
+     xlab="Percent THC", ylab="Percent CBD")
+#abline(lm(alldata$THC_over_all_cannabinoids ~ alldata$CBD_over_all_cannabinoids))
+cor.test(alldata$THC_over_all_cannabinoids, alldata$CBD_over_all_cannabinoids)
+var(alldata$THC_over_all_cannabinoids, na.rm=T)
+var(alldata$CBD_over_all_cannabinoids, na.rm=T)
+cov(alldata$THC_over_all_cannabinoids,alldata$CBD_over_all_cannabinoids, use="complete.obs")
+
+
+###########################################################################
+#within time point: initial timepoint (it) & delta correlations (Table S2)#
+###########################################################################
+
+library(Hmisc)
+
+itcoranddelta <-rcorr(as.matrix(alldata[, c(5:12,22:25)]))
+
+itcoranddeltap= signif(itcoranddelta$P, 3)
+#write.table(itcoranddeltap, file="correlation_it_delta_pval_03092019.txt", sep="\t")
+
+itcoranddeltar= signif(itcoranddelta$r, 3)
+#write.table(itcoranddeltar, file="correlation_it_delta_r_03092019.txt", sep="\t")
+
+
+###########################################################################
+#within time point: final timepoint (ft) & delta correlations (Table S3)###
+###########################################################################
+
+ftcoranddelta<-rcorr(as.matrix(alldata[,c(14:25,37:40)]))
+
+ftcoranddeltap= signif(ftcoranddelta$P, 3)
+#write.table(ftcoranddeltap, file="correlation_ft_delta_pval_03092019.txt", sep="\t")
+
+ftcoranddeltar= signif(ftcoranddelta$r, 3)
+#write.table(ftcoranddeltar, file="correlation_ft_delta_r_03092019.txt", sep="\t")
+
+
+###########################################################################
+####between time poinst: initial vs final timepoints (Table S4) ###########
+###########################################################################
+
+itvsftcors <-rcorr(as.matrix(alldata[, c(5:12,14:21,37:40)]))
+
+itvsftcorsp= signif(itvsftcors$P, 3)
+#write.table(itvsftcorsp, file="correlations_it_ft_pval_03092019.txt", sep="\t")
+
+itvsftcorsr= signif(itvsftcors$r, 3)
+#write.table(itvsftcorsr, file="correlations_it_ft_r_03092019.txt", sep="\t")
+
+
+###########################################################################
+############### sex t-tests and stats (Table S5) ##########################
+###########################################################################
+
+manyttest=lapply(alldata[,c(5:12,14:25,37:40)], function(x) t.test(x ~ alldata$sex, var.equal = TRUE))
+manyttest #bud_count_main_cola_ft significantly different btn. males and females
+
+#t.test(alldata$bud_count_main_cola_ft~alldata$sex)
+
+aggregate(alldata$bud_count_main_cola_ft, by=list(meansex=alldata$sex), mean, na.rm=T)
+#meansex         WTF???
+#F 24.78947
+#M 35.75000
+
+head(alldata)
+inner_node_vs_sexIT=t.test(alldata$node_length_ratio_IT~alldata$sex)
+inner_node_vs_sexFT=t.test(alldata$node_length_ratio_FT~alldata$sex)
+
+
+###########################################################################
+############### sex correlations and stats (Table S6) #####################
+###########################################################################
+
+library(dplyr)
+library(Hmisc)
+head(alldata)
+
+OnlyMales =subset(alldata, sex=="M")
+OnlyFemales =subset(alldata, sex=="F")
+
+
+MaleCorrelations=rcorr(as.matrix(OnlyMales[,c(5:12,14:25,37:40,57:58)]))
+MaleCorrelationsp= signif(MaleCorrelations$P, 3)
+
+write.table(MaleCorrelationsp, file="correlations_males_07082020.txt", sep="\t")
+
+
+
+FemaleCorrelations=rcorr(as.matrix(OnlyFemales[,c(5:12,14:25,37:40,57:58)]))
+FemaleCorrelationsp=signif(FemaleCorrelations$P, 3)
+
+
+write.table(FemaleCorrelationsp, file="correlations_females_07082020.txt", sep="\t")
+
+
+
+
+###########################################################################
+############### Leaf shape Manovas and stats (Table S7) ###################
+###########################################################################
+library(plsdepot)
+
+############### Initial time point ########################################
+
+############### Individual MANOVAs  it leaf shape
+
+
+mv1it= manova(cbind(LPC1, LPC2) ~ Height_cm_it, data=alldata)
+summary(mv1it, test="W")
+
+mv2it= manova(cbind(LPC1, LPC2) ~ Stalk_Diameter_mm_it, data=alldata)
+summary(mv2it, test="W")
+
+mv3it= manova(cbind(LPC1, LPC2) ~ FELL_Length_cm_it, data=alldata)
+summary(mv3it, test="W")
+
+mva4it= manova(cbind(LPC1, LPC2) ~ FELL_Width_cm_it, data=alldata)
+summary(mva4it, test="W")
+
+mv5it= manova(cbind(LPC1, LPC2) ~ FELL_Center_Leaf_Width_cm_it, data=alldata)
+summary(mv5it, test="W")
+
+mv6it= manova(cbind(LPC1, LPC2) ~ no_branches_it, data=alldata)
+summary(mv6it, test="W")
+
+mv7it= manova(cbind(LPC1, LPC2) ~ no_nodes_it, data=alldata)
+summary(mv7it, test="W")
+
+mv8it= manova(cbind(LPC1, LPC2) ~ petiole_length_cm_it, data=alldata)
+summary(mv8it, test="W")
+
+############### MANOVA models it leaf shape
+
+##all
+mvallit1= manova(cbind(LPC1, LPC2) ~ Height_cm_it+Stalk_Diameter_mm_it
+                 +FELL_Length_cm_it+FELL_Width_cm_it+FELL_Center_Leaf_Width_cm_it
+                 +no_branches_it+no_nodes_it+petiole_length_cm_it, data=alldata)
+summary(mvallit1, test="W")
+
+
+Mregallit <- lm(cbind(LPC1, LPC2) ~ Height_cm_it+Stalk_Diameter_mm_it
+                +FELL_Length_cm_it+FELL_Width_cm_it+FELL_Center_Leaf_Width_cm_it
+                +no_branches_it+no_nodes_it+petiole_length_cm_it, data=alldata)
+summary(Mregallit)
+
+
+##leaf
+mvleafit=manova(cbind(LPC1, LPC2) ~ FELL_Length_cm_it*FELL_Width_cm_it
+                *FELL_Center_Leaf_Width_cm_it, data=alldata)
+summary(mvleafit, test="W")
+
+
+Mregleafit <- lm(cbind(LPC1, LPC2) ~ FELL_Length_cm_it*FELL_Width_cm_it
+                 *FELL_Center_Leaf_Width_cm_it, data=alldata)
+summary(Mregleafit)
+
+
+##plant
+mvplantit= manova(cbind(LPC1, LPC2) ~ 
+                    Height_cm_it*Stalk_Diameter_mm_it*no_branches_it
+                  *no_nodes_it*petiole_length_cm_it, data=alldata)
+summary(mvplantit, test="W")
+
+Mregplantit <- lm(cbind(LPC1, LPC2) ~ Height_cm_it*Stalk_Diameter_mm_it*no_branches_it
+                  *no_nodes_it*petiole_length_cm_it, data=alldata)
+summary(Mregplantit)
+
+
+############### Final time point ########################################
+
+############### Individual MANOVAs ft leaf shape
+
+mv1ft= manova(cbind(LPC1, LPC2) ~ Height_cm_ft, data=alldata)
+summary(mv1ft, test="W")
+
+mv2ft= manova(cbind(LPC1, LPC2) ~ Stalk_Diameter_mm_ft, data=alldata)
+summary(mv2ft, test="W")
+
+mv3ft= manova(cbind(LPC1, LPC2) ~ no_branches_ft, data=alldata)
+summary(mv3ft, test="W")
+
+mva4ft= manova(cbind(LPC1, LPC2) ~ no_nodes_main_branch_ft, data=alldata)
+summary(mva4ft, test="W")
+
+mv5ft= manova(cbind(LPC1, LPC2) ~ bud_count_main_cola_ft, data=alldata)
+summary(mv5ft, test="W")
+
+mv6ft= manova(cbind(LPC1, LPC2) ~ bud_width_biggest_bud_mm_ft, data=alldata)
+summary(mv6ft, test="W")
+
+mv7ft= manova(cbind(LPC1, LPC2) ~ length_of_longest_side_branch_cm_ft, data=alldata)
+summary(mv7ft, test="W")
+
+mv8ft= manova(cbind(LPC1, LPC2) ~ Bud_count_longest_side_branch_ft, data=alldata)
+summary(mv8ft, test="W")
+
+mv9ft= manova(cbind(LPC1, LPC2) ~ leaf_Length_cm, data=alldata)
+summary(mv9ft, test="W")
+
+mv10ft= manova(cbind(LPC1, LPC2) ~ leaf_Width_cm, data=alldata)
+summary(mv10ft, test="W")
+
+mv11ft= manova(cbind(LPC1, LPC2) ~ no_serration_mid_leaflet, data=alldata)
+summary(mv11ft, test="W")
+
+mv12ft= manova(cbind(LPC1, LPC2) ~ no_of_Leaflets, data=alldata)
+summary(mv12ft, test="W")
+
+
+head(alldata)
+
+############### MANOVA models ft leaf shape
+
+##all
+mvallft= manova(cbind(LPC1, LPC2) ~ Height_cm_ft+Stalk_Diameter_mm_ft+no_branches_ft+no_nodes_main_branch_ft
+                +bud_count_main_cola_ft+bud_width_biggest_bud_mm_ft+length_of_longest_side_branch_cm_ft
+                +Bud_count_longest_side_branch_ft+leaf_Length_cm+leaf_Width_cm+no_serration_mid_leaflet
+                +no_of_Leaflets, data=alldata)
+summary(mvallft, test="W")
+
+Mregallft= lm(cbind(LPC1, LPC2) ~ Height_cm_ft+Stalk_Diameter_mm_ft+no_branches_ft+no_nodes_main_branch_ft
+              +bud_count_main_cola_ft+bud_width_biggest_bud_mm_ft+length_of_longest_side_branch_cm_ft
+              +Bud_count_longest_side_branch_ft+leaf_Length_cm+leaf_Width_cm+no_serration_mid_leaflet
+              +no_of_Leaflets, data=alldata)
+summary(Mregallft)
+
+
+##leaf
+mvleafft= manova(cbind(LPC1, LPC2) ~ leaf_Length_cm*leaf_Width_cm*no_serration_mid_leaflet
+                 *no_of_Leaflets, data=alldata)
+summary(mvleafft, test="W")
+
+Mregleafft= lm(cbind(LPC1, LPC2) ~ leaf_Length_cm*leaf_Width_cm*no_serration_mid_leaflet
+               *no_of_Leaflets, data=alldata)
+summary(Mregleafft)
+
+
+##buds
+mvbudsft= manova(cbind(LPC1, LPC2) ~ bud_count_main_cola_ft*bud_width_biggest_bud_mm_ft
+                 *Bud_count_longest_side_branch_ft, data=alldata)
+summary(mvbudsft, test="W")
+
+Mregbudsft= lm(cbind(LPC1, LPC2) ~ bud_count_main_cola_ft*bud_width_biggest_bud_mm_ft
+               *Bud_count_longest_side_branch_ft, data=alldata)
+summary(Mregbudsft)
+
+
+############### Deltas ########################################
+
+############### Individual MANOVAs delta leaf shape
+
+mv1delta= manova(cbind(LPC1, LPC2) ~ delta_height_ft_it, data=alldata)
+summary(mv1delta, test="W")
+
+mv2delta = manova(cbind(LPC1, LPC2) ~ delta_stalk_diam_ft_it, data=alldata)
+summary(mv2delta, test="W")
+
+mv3delta = manova(cbind(LPC1, LPC2) ~ delta_no_branches_ft_it, data=alldata)
+summary(mv3delta, test="W")
+
+mv4delta = manova(cbind(LPC1, LPC2) ~ delta_no_nodes_ft_it, data=alldata)
+summary(mv4delta, test="W")
+
+############### MANOVA model delta leaf shape
+
+mvalldelta= manova(cbind(LPC1, LPC2) ~ delta_height_ft_it*delta_stalk_diam_ft_it
+                   *delta_no_branches_ft_it*delta_no_nodes_ft_it, data=alldata)
+summary(mvalldelta, test="W")
+
+
+
+###########################################################################
+############### cannabinoid analysis and stats (Table S8) #################
+###########################################################################
+
+library(Hmisc)
+
+cannabinoidcorrelations <-rcorr(as.matrix(alldata[, c(5:12,14:25,28:30)]))
+
+cannabinoidcorrelationsp= signif(cannabinoidcorrelations$P, 3)
+#write.table(cannabinoidcorrelationsp, file="correlation_cannabinoids_pval_06092019.txt", sep="\t")
+
+cannabinoidcorrelationsr= signif(cannabinoidcorrelations$r, 3)
+#write.table(cannabinoidcorrelationsr, file="correlation_cannabinoids_r_06092019.txt", sep="\t")
+
+
+############### MANOVA models it cannabinoids
+
+##all
+mvcannallit= manova(cbind(CPC1, CPC2) ~ Height_cm_it+Stalk_Diameter_mm_it
+                 +FELL_Length_cm_it+FELL_Width_cm_it+FELL_Center_Leaf_Width_cm_it
+                 +no_branches_it+no_nodes_it+petiole_length_cm_it, data=alldata)
+summary(mvcannallit, test="W")
+
+
+Mregcannallit= lm(cbind(CPC1, CPC2) ~ Height_cm_it+Stalk_Diameter_mm_it
+                    +FELL_Length_cm_it+FELL_Width_cm_it+FELL_Center_Leaf_Width_cm_it
+                    +no_branches_it+no_nodes_it+petiole_length_cm_it, data=alldata)
+summary(Mregcannallit)
+
+
+##leaf
+mvcannleafit=manova(cbind(CPC1, CPC2) ~ FELL_Length_cm_it*FELL_Width_cm_it
+                *FELL_Center_Leaf_Width_cm_it, data=alldata)
+summary(mvcannleafit, test="W")
+
+Mregcannleafit=lm(cbind(CPC1, CPC2) ~ FELL_Length_cm_it*FELL_Width_cm_it
+                    *FELL_Center_Leaf_Width_cm_it, data=alldata)
+summary(Mregcannleafit)
+
+
+##plant
+mvcannplantit= manova(cbind(CPC1, CPC2) ~ 
+                    Height_cm_it*Stalk_Diameter_mm_it*no_branches_it
+                  *no_nodes_it*petiole_length_cm_it, data=alldata)
+summary(mvcannplantit, test="W")
+
+
+Mregcannplantit= lm(cbind(CPC1, CPC2) ~ 
+                        Height_cm_it*Stalk_Diameter_mm_it*no_branches_it
+                      *no_nodes_it*petiole_length_cm_it, data=alldata)
+summary(Mregcannplantit)
+
+
+############### MANOVA models ft cannabinoids
+
+##all
+mvcannallft= manova(cbind(CPC1, CPC2) ~ Height_cm_ft+Stalk_Diameter_mm_ft+no_branches_ft+no_nodes_main_branch_ft
+                +bud_count_main_cola_ft+bud_width_biggest_bud_mm_ft+length_of_longest_side_branch_cm_ft
+                +Bud_count_longest_side_branch_ft+leaf_Length_cm+leaf_Width_cm+no_serration_mid_leaflet
+                +no_of_Leaflets, data=alldata)
+summary(mvcannallft, test="W")
+
+Mregcannallft= lm(cbind(CPC1, CPC2) ~ Height_cm_ft+Stalk_Diameter_mm_ft+no_branches_ft+no_nodes_main_branch_ft
+                    +bud_count_main_cola_ft+bud_width_biggest_bud_mm_ft+length_of_longest_side_branch_cm_ft
+                    +Bud_count_longest_side_branch_ft+leaf_Length_cm+leaf_Width_cm+no_serration_mid_leaflet
+                    +no_of_Leaflets, data=alldata)
+summary(Mregcannallft)
+
+
+##plant
+mvcannplantft1= manova(cbind(CPC1, CPC2) ~ Height_cm_ft+Stalk_Diameter_mm_ft+no_branches_ft
+                   +no_nodes_main_branch_ft, data=alldata)
+summary(mvcannplantft1, test="W")
+
+Mregcannplantft1= lm(cbind(CPC1, CPC2) ~ Height_cm_ft+Stalk_Diameter_mm_ft+no_branches_ft
+                       +no_nodes_main_branch_ft, data=alldata)
+summary(Mregcannplantft1)
+
+
+##leaf
+mvcannleafft= manova(cbind(CPC1, CPC2) ~ leaf_Length_cm*leaf_Width_cm*no_serration_mid_leaflet
+                 *no_of_Leaflets, data=alldata)
+summary(mvcannleafft, test="W")
+
+
+mvcannbudsft= manova(cbind(CPC1, CPC2) ~ bud_count_main_cola_ft*bud_width_biggest_bud_mm_ft
+                 *Bud_count_longest_side_branch_ft, data=alldata)
+summary(mvcannbudsft, test="W")
+
+
+############### MANOVA model delta cannabinoids
+
+mvcannalldelta= manova(cbind(CPC1, CPC2) ~ delta_height_ft_it+delta_stalk_diam_ft_it
+                   +delta_no_branches_ft_it+delta_no_nodes_ft_it, data=alldata)
+summary(mvcannalldelta, test="W")
+
+Mregcannalldelta= lm(cbind(CPC1, CPC2) ~ delta_height_ft_it+delta_stalk_diam_ft_it
+                       +delta_no_branches_ft_it+delta_no_nodes_ft_it, data=alldata)
+summary(Mregcannalldelta)
+
+
+############### MANOVA cannabinoids vs leaf shape
+shapevscannman= manova(cbind(CPC1, CPC2) ~ LPC1*LPC2, data=alldata)
+summary(shapevscannman, test="W")
+
+cannvsshapeman= manova(cbind(LPC1, LPC2) ~ CPC1*CPC2, data=alldata)
+summary(cannvsshapeman, test="W")
+
+Mregshapevscann <- lm(cbind(alldata$THC_over_all_cannabinoids, alldata$CBD_over_all_cannabinoids, alldata$CBG_over_all_cannabinoids) ~ LPC1*LPC2, data=alldata)
+summary(Mregshapevscann)
+
+
+Mregshapevscann2 <- lm(cbind(LPC1,LPC2) ~ THC_over_all_cannabinoids*CBD_over_all_cannabinoids*CBG_over_all_cannabinoids, data=alldata)
+summary(Mregshapevscann2)
+
